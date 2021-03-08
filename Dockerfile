@@ -1,16 +1,10 @@
 FROM golang:alpine AS builder
 
-RUN apk add --no-cache ca-certificates gcc mingw-w64-gcc build-base curl
+RUN apk add --no-cache ca-certificates build-base 
 
 WORKDIR /go/src/app
 
 COPY . .
-
-RUN go test -tags musl ./...
-
-RUN go get honnef.co/go/tools/cmd/staticcheck
-
-RUN staticcheck -tags musl ./...
 
 RUN go vet -tags musl ./...
 
