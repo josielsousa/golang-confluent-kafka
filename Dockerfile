@@ -10,14 +10,12 @@ RUN go test -tags musl ./...
 
 RUN go get honnef.co/go/tools/cmd/staticcheck
 
-# RUN staticcheck -tags musl ./...
+RUN staticcheck -tags musl ./...
 
-# RUN go vet -tags musl ./...
+RUN go vet -tags musl ./...
 
 RUN go mod verify
 
-RUN go get github.com/confluentinc/confluent-kafka-go@v1.5.2
+RUN GOARCH=amd64 GOOS=linux go build -a -v --ldflags '-extldflags "-static" -s -w' -tags musl -o bin/go-kafka-gclib 
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o helloworld -a -v 
-
-ENTRYPOINT [ "/go/src/app/helloworld" ]
+ENTRYPOINT [ "/go/src/app/bin/go-kafka-gclib" ]
