@@ -2,23 +2,11 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
-
-// HTTPHandler - create a handler struct
-type HTTPHandler struct{}
-
-// implement `ServeHTTP` method on `HTTPHandler` struct
-func (h HTTPHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
-	// create response binary data
-	data := []byte("Hello World!") // slice of bytes
-	// write `data` to response
-	res.Write(data)
-}
 
 var topicName = "teste-golang-gclib-alpine"
 
@@ -79,7 +67,7 @@ func consumer() {
 	err = consumer.SubscribeTopics(topics, nil)
 
 	// run := true
-	for i := 0; i < 50; i++ {
+	for i := 0; i < 5; i++ {
 
 		// for run == true {
 		ev := consumer.Poll(2000)
@@ -101,14 +89,14 @@ func consumer() {
 }
 
 func main() {
-	// create a new handler
-	handler := HTTPHandler{}
+	fmt.Println("Starting Application...")
 
-	fmt.Println("Starting API...")
+	forever := make(chan bool)
+	go func() {
+		producer()
+		consumer()
+	}()
 
-	producer()
-	consumer()
-
-	// listen and serve
-	http.ListenAndServe(":9000", handler)
+	fmt.Println(" [*] Waiting for messages")
+	<-forever
 }
