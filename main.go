@@ -1,102 +1,48 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
-	"time"
+	"runtime"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/kelseyhightower/envconfig"
+
+	"github.com/josielsousa/golang-gclib-alpine-confluent-kafka/config"
+	"github.com/josielsousa/golang-gclib-alpine-confluent-kafka/consumer"
+	"github.com/josielsousa/golang-gclib-alpine-confluent-kafka/producer"
 )
 
-var topicName = "teste-golang-gclib-alpine"
+func loadConfig() config.KafkaClient {
+	noPrefix := ""
+	var kafkaClient config.KafkaClient
 
-func producer() {
-	p, err := kafka.NewProducer(&kafka.ConfigMap{
-		"bootstrap.servers": "localhost:9092,localhost:9092",
-		"client.id":         "test-golang-gclib",
-		"acks":              "all"})
-
+	err := envconfig.Process(noPrefix, &kafkaClient)
 	if err != nil {
-		fmt.Printf("Failed to create producer: %s\n", err)
+		fmt.Printf("Failed initialize config envs: %s\n", err)
 		os.Exit(1)
 	}
 
-	deliveryChan := make(chan kafka.Event, 10000)
-
-	for i := 0; i < 5; i++ {
-		err = p.Produce(&kafka.Message{
-			TopicPartition: kafka.TopicPartition{
-				Topic:     &topicName,
-				Partition: kafka.PartitionAny,
-			},
-			Value: []byte(fmt.Sprintf("teste kafka %d", time.Now().UnixNano()))},
-			deliveryChan,
-		)
-
-		e := <-deliveryChan
-		m := e.(*kafka.Message)
-
-		if m.TopicPartition.Error != nil {
-			fmt.Printf("Delivery failed: %v\n", m.TopicPartition.Error)
-		} else {
-			fmt.Printf("Delivered message to topic %s [%d] at offset %v\n",
-				*m.TopicPartition.Topic, m.TopicPartition.Partition, m.TopicPartition.Offset)
-		}
-	}
-
-	close(deliveryChan)
+	return kafkaClient
 }
 
-func consumer() {
-
-	// intialize the writer with the broker addresses, and the topic
-	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers":  "localhost:9092,localhost:9092",
-		"group.id":           "test-golang-gclib",
-		"enable.auto.commit": false,
-		"client.id":          "test-golang-gclib",
-		"auto.offset.reset":  "smallest"},
-	)
-
-	if err != nil {
-		fmt.Printf("Failed to create consumer: %s\n", err)
-		os.Exit(1)
-	}
-
-	topics := []string{topicName}
-	err = consumer.SubscribeTopics(topics, nil)
-
-	// run := true
-	for i := 0; i < 5; i++ {
-
-		// for run == true {
-		ev := consumer.Poll(2000)
-		switch e := ev.(type) {
-		case *kafka.Message:
-			fmt.Printf("%% Message on %s:\n%s\n",
-				e.TopicPartition, string(e.Value))
-		case kafka.PartitionEOF:
-			fmt.Printf("%% Reached %v\n", e)
-		case kafka.Error:
-			fmt.Fprintf(os.Stderr, "%% Error: %v\n", e)
-			// run = false
-		default:
-			fmt.Printf("Ignored %v\n", e)
-		}
-	}
-
-	consumer.Close()
+// init - Disable memory profile rate.
+func init() {
+	runtime.MemProfileRate = 0
 }
 
 func main() {
 	fmt.Println("Starting Application...")
+	configKafka := loadConfig()
+
+	jsonBytes, _ := json.Marshal(configKafka)
+	fmt.Println("Config: ", string(jsonBytes))
 
 	forever := make(chan bool)
 	go func() {
-		producer()
-		consumer()
+		producer.Exec(configKafka)
+		consumer.Exec(configKafka)
 	}()
 
-	fmt.Println(" [*] Waiting for messages")
 	<-forever
 }
