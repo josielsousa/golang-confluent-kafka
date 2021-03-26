@@ -33,22 +33,41 @@ func Exec(configKafka config.KafkaClient) {
 		os.Exit(1)
 	}
 
+	msgChannel := make(chan string)
+	defer close(msgChannel)
+
+	go consumes(consumer, msgChannel)
+	run := true
+
+	for run {
+		msg := <-msgChannel
+		fmt.Printf("--> Message: %s\n", msg)
+		consumer.Commit()
+	}
+}
+
+func consumes(consumer *kafka.Consumer, msgChannel chan string) {
 	run := true
 	timeout := 5 * time.Second
 
 	for run {
 		ev := consumer.Poll(int(timeout.Milliseconds()))
 		switch e := ev.(type) {
+
 		case *kafka.Message:
-			fmt.Printf("--> Message: %s\n", string(e.Value))
-			consumer.Commit()
+			msg := string(e.Value)
+			msgChannel <- msg
+
 		case kafka.PartitionEOF:
 			fmt.Printf("--> Reached %v\n", e)
+
 		case kafka.Error:
 			fmt.Fprintf(os.Stderr, "%% Error: %v\n", e)
 			run = false
+
 		default:
 			fmt.Println("[*] Waiting for messages")
+
 		}
 	}
 
