@@ -6,10 +6,11 @@ WORKDIR /go/src/app
 
 COPY . .
 
-RUN go vet -tags musl ./...
+RUN go vet -tags musl ./... && go mod verify && GOARCH=amd64 GOOS=linux go build -a -v --ldflags '-extldflags "-static" -s -w' -tags musl -o bin/go-kafka-gclib 
 
-RUN go mod verify
 
-RUN GOARCH=amd64 GOOS=linux go build -a -v --ldflags '-extldflags "-static" -s -w' -tags musl -o bin/go-kafka-gclib 
+FROM gcr.io/distroless/static-debian10
 
-ENTRYPOINT [ "/go/src/app/bin/go-kafka-gclib" ]
+COPY --from=builder /go/src/app/bin/go-kafka-gclib /bin/go-kafka-gclib
+
+ENTRYPOINT [ "/bin/go-kafka-gclib" ]
