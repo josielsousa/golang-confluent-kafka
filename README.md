@@ -30,6 +30,18 @@ docker-compose exec kafka kafka-topics \
 
 ```
 
+- Example to produce a new message
+
+```bash
+docker-compose exec kafka  \
+  bash -c "seq 10 | kafka-console-producer \
+    --request-required-acks 1 \
+    --broker-list localhost:29092 \
+    --topic alpine-topic-msgs && \
+    echo 'Produced 10 messages.'
+  "
+```
+
 ## Run docker container
 
 ```bash
