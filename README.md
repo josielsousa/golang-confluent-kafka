@@ -24,7 +24,7 @@ docker-compose exec kafka kafka-topics \
   --create \
   --bootstrap-server localhost:9092 \
   --replication-factor 1 \
-  --partitions 1 \
+  --partitions 4 \
   --if-not-exists \
   --topic alpine-topic-msgs
 
@@ -46,7 +46,7 @@ docker-compose exec kafka  \
 
 ```bash
 docker run --rm --network host \
---env KAFKA_BOOTSTRAP_SERVERS="hostname:9092,hostname:9092" \
+--env KAFKA_BOOTSTRAP_SERVERS="192.168.15.98:9092,192.168.15.98:9092" \
 --name gokafka-test go-kafka-gclib:v0.0.1
 
 ```

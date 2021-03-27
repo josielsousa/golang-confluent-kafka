@@ -7,6 +7,8 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+    extra_hosts:
+      - "moby:127.0.0.1"
 
   kafka:
     image: confluentinc/cp-kafka:latest
@@ -23,6 +25,8 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://127.0.0.1:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    extra_hosts:
+      - "moby:127.0.0.1"
 
   kafdrop:
     image: obsidiandynamics/kafdrop:latest
@@ -34,7 +38,9 @@ services:
       - 19000:9000
     environment:
       KAFKA_BROKERCONNECT: kafka:29092
-
+    extra_hosts:
+      - "moby:127.0.0.1"
+      
 networks: 
   broker-kafka:
     driver: bridge  
