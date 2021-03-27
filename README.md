@@ -3,7 +3,7 @@ Build and run golang apps that use the [confluentinc/confluent-kafka-go lib kafk
 ## Build image
 
 ```bash
-git clone https://github.com/josielsousa/golang-gclib-alpine-confluent-kafka
+git clone https://github.com/josielsousa/golang-confluent-kafka.git
 
 docker build -t go-kafka-gclib:v0.0.1 .
 ```
@@ -16,7 +16,7 @@ docker build -t go-kafka-gclib:v0.0.1 .
 docker-compose up -d
 ```
 
-- Create a topic on [localhost kafdrop](http://localhost:19000/)
+- Create a new topic [localhost kafdrop](http://localhost:19000/)
 
 ```bash
 
@@ -33,5 +33,8 @@ docker-compose exec kafka kafka-topics \
 ## Run docker container
 
 ```bash
-docker run --rm --network="host" --name gokafka-test go-kafka-gclib:v0.0.1
+docker run --rm --network host \
+--env KAFKA_BOOTSTRAP_SERVERS="hostname:9092,hostname:9092" \
+--name gokafka-test go-kafka-gclib:v0.0.1
+
 ```
